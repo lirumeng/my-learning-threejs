@@ -116,10 +116,10 @@
 
         var mesh = new THREE.SceneUtils.createMultiMaterialObject(geom, materials);
         mesh.children.forEach(function(e) {
+          //  为每一种mesh 添加castShadow
           e.castShadow = true;
         });
         scene.add(mesh);
-
 
         function addControl(x, y, z) {
           var controls = new function() {
@@ -131,7 +131,7 @@
           return controls;
         }
 
-        var controlPoints = [];
+        var controlPoints = [];  //添加控制面板中每一项 的默认值
         controlPoints.push(addControl(3, 5, 3));
         controlPoints.push(addControl(3, 5, 0));
         controlPoints.push(addControl(3, 0, 3));
@@ -143,8 +143,9 @@
 
         var gui = new dat.GUI();
         gui.add(new function() {
-          this.clone = function() {
-            var clonedGeometry = mesh.children[0].geometry.clone();
+          this.clone = function() {  //设置复制对象的属性
+            var clonedGeometry = mesh.children[0].geometry.clone();   // 复制对象中第一个 对象模型
+            console.log(clonedGeometry);
             var materials = [
               new THREE.MeshLambertMaterial({
                 opacity: 0.6,
@@ -158,38 +159,44 @@
             ];
 
             var mesh2 = THREE.SceneUtils.createMultiMaterialObject(clonedGeometry, materials);
-            mesh2.children.forEach(function(e) {
+
+            // mesh2.children.forEach()   等价于   mesh2.traverse()
+            mesh2.traverse(function(e) {
               e.castShadow = true;
             });
 
-            mesh2.translateX(5);
-            mesh2.translateZ(5);
+            mesh2.translateX(5);  //  <==> mesh2.position.x +=5;
+            mesh2.translateZ(5);  //  <==> mesh2.position.z += 5;
             mesh2.name = 'clone';
+            //在复制之前 移除当前所有的 复制对象
             scene.remove(scene.getObjectByName('clone'));
+            // 再添加要复制的 对象
             scene.add(mesh2);
           }
         }, 'clone');
 
         for (var i = 0; i < 8; i++) {
-          f1 = gui.addFolder('Vertices' + (i + 1));
-          f1.add(controlPoints[i], 'x', -10, 10);
-          f1.add(controlPoints[i], 'y', -10, 10);
-          f1.add(controlPoints[i], 'z', -10, 10);
+          f1 = gui.addFolder('Vertices' + (i + 1));   // 添加文件 ，每个文件中包含 x ,y ,z 三个属性
+          f1.add(controlPoints[i], 'x', -10, 10);   // 最小值 和 最大值
+          f1.add(controlPoints[i], 'y', -10, 10);   // 最小值 和 最大值
+          f1.add(controlPoints[i], 'z', -10, 10);   // 最小值 和 最大值
         }
 
         render();
         function render() {
           stats.update();
 
+          // 获取更改后的最新 顶点数组
           var vertices = [];
           for (var i = 0; i < 8; i++) {
             vertices.push(new THREE.Vector3(controlPoints[i].x, controlPoints[i].y, controlPoints[i].z));
           }
 
           mesh.children.forEach(function(e) {
-            e.geometry.vertices = vertices;
-            e.geometry.verticesNeedUpdate = true;
-            e.geometry.computeFaceNormals();
+            e.geometry.vertices = vertices;   // 更改顶点数组
+            e.geometry.verticesNeedUpdate = true;   //Set to true if the vertices array has been updated.
+            e.geometry.computeFaceNormals();    //重新计算侧面
+            //   整个模型的更新 完成
           });
 
           requestAnimationFrame(render);
